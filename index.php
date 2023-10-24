@@ -1,44 +1,24 @@
 <?php
     // $dayOfYear = date('z') + 1; TODO: as soon as there is a question for each day, change it back
     $dayOfYear = 297;
-    require "./" . $dayOfYear . ".php";
-    $totalVotes = array_sum($data["answers"]);
-?>
+    $data = json_decode(file_get_contents('./' . $dayOfYear . '.json'));
+    // convert $data->answers to an array
+    $answers = (array) $data->answers;
+    $data = (array) $data;
+    $data['answers'] = $answers;
+    $totalVotes = array_sum($data['answers']);
 
-<!DOCTYPE html>
-<html lang="en">
+    if ($_POST['vote']) {
+        if (in_array($_POST['vote'], array_keys($data['answers']))) {
+            // increase the selected answer by 1
+            $data['answers'][$_POST['vote']]++;
+            // save data to file // TODO the file permission is set to 666, we need a better solution
+            $fp = fopen("./" . $dayOfYear . "json", "w");
+            fwrite($fp, json_encode($data));
+            fclose($fp);
+        }
+        // TODO: if it voted for something that does not exist, we log the answer and the IP address and timestamp
+    }
 
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modern PHP</title>
-    <link rel="preconnect" href="https://fonts.gstatic.com" />
-    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500&display=swap" rel="stylesheet" />
-    <script src="https://kit.fontawesome.com/7f8f824712.js" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="style.css">
-</head>
+    require "./template.php";
 
-<body>
-    <header>
-        <h1><i class="fas fa-comment-dots"></i> VoteR</h1>
-    </header>
-    <main>
-        <section>
-            <h2>#<?= $dayOfYear ?> <?= $data["question"] ?>?</h2>
-            <form method="POST">
-                <ul>
-                    <?php foreach ($data["answers"] as $answer => $votes) : ?>
-                    <li>
-                        <label><input type="radio" name="vote" value="Vue"><?= $answer ?></label>
-                        <span><i class="fas fa-heart"></i><?= $votes / $totalVotes * 100 ?>%</span>
-                    </li>
-                    <?php endforeach; ?>
-                </ul>
-                <input type="submit" value="Vote">
-            </form>
-        </section>
-    </main>
-</body>
-
-</html>
